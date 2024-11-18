@@ -1,6 +1,7 @@
 package com.ngm.controllers;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 @RestController
 public class TodoController {
@@ -54,31 +56,26 @@ public class TodoController {
 
     @PutMapping("/todos/{id}")
     public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @RequestBody Todo todo) {
-        Todo existingTodo = todoRepository.findById(id).orElse(null);
-
-        if (existingTodo != null) {
-            existingTodo.setTitle(todo.getTitle());
-            existingTodo.setDescription(todo.getDescription());
-            existingTodo.setCompleted(todo.isCompleted());
-            existingTodo = todoRepository.save(existingTodo);
-
-            return new ResponseEntity<>(existingTodo, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        return todoRepository.findById(id)
+                .map(existingTodo -> {
+                    existingTodo.setTitle(todo.getTitle());
+                    existingTodo.setDescription(todo.getDescription());
+                    existingTodo.setCompleted(todo.isCompleted());
+                    return new ResponseEntity<>(todoRepository.save(existingTodo), HttpStatus.OK);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/todos/{id}/complete")
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<Todo> completeTodo(@PathVariable("id") Long id) {
-        Todo existingTodo = todoRepository.findById(id).orElse(null);
-
-        if (existingTodo != null) {
+        try {
+            Todo existingTodo = todoRepository.findById(id).get();
             existingTodo.setCompleted(true);
             existingTodo = todoRepository.save(existingTodo);
-
-            return new ResponseEntity<>(existingTodo, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.ok(existingTodo);
+        } catch (NoSuchElementException exception) {
+            return ResponseEntity.notFound().build();
         }
     }
 
