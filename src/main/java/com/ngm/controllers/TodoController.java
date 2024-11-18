@@ -14,10 +14,10 @@ import com.ngm.repositories.TodoRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
 
 @RestController
 public class TodoController {
@@ -28,7 +28,6 @@ public class TodoController {
     public String greeting() {
         return "Hello!";
     }
-    
 
     @PostMapping("/todos")
     public ResponseEntity<Todo> createTodo(@RequestBody Todo todo) {
@@ -61,6 +60,20 @@ public class TodoController {
             existingTodo.setTitle(todo.getTitle());
             existingTodo.setDescription(todo.getDescription());
             existingTodo.setCompleted(todo.isCompleted());
+            existingTodo = todoRepository.save(existingTodo);
+
+            return new ResponseEntity<>(existingTodo, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PatchMapping("/todos/{id}/complete")
+    public ResponseEntity<Todo> completeTodo(@PathVariable("id") Long id) {
+        Todo existingTodo = todoRepository.findById(id).orElse(null);
+
+        if (existingTodo != null) {
+            existingTodo.setCompleted(true);
             existingTodo = todoRepository.save(existingTodo);
 
             return new ResponseEntity<>(existingTodo, HttpStatus.OK);
