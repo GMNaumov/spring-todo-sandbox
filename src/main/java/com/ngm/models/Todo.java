@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -26,11 +28,13 @@ public class Todo {
     private Long id;
 
     @Column(name = "title")
+    @NotBlank(message = "The title shold not be blank")
     private String title;
 
     @Column(name = "description")
     private String description;
 
     @Column(name = "is_completed")
+    @NotNull(message = "Todo status should not be null")
     private boolean isCompleted;
 }
